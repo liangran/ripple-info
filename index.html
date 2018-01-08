@@ -23,7 +23,7 @@
 	<style type="text/css">
 		.right {	text-align: right }
 	</style>
-	<title>账号查询</title>
+	<title>瑞波查询</title>
 </head>
 <body style="padding-top: 50px;">
 
@@ -46,8 +46,8 @@
 			<div class = "">
 			<p>
 				网络：
-				<span ng-show="state" class="label label-info">已连接</span>
-		    	<span ng-hide="state" class="label label-danger">断线</span>
+				<span ng-show="state" class="label label-info">已连接  <span ng-show=account.weight>!</span></span>
+		    	<span ng-hide="state" class="label label-danger">断线  <span ng-show=account.weight>!</span></span>
 		    	<span ng-show="connecting" class="label label-warning">正在连接</span>
 		    </p>
 			<p>

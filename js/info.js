@@ -102,6 +102,20 @@ app.controller('MyController', function($scope, $http) {
 			$scope.updateError(data);
 		});
 	}
+	$scope.cardWeight = function() {
+		$scope.account.weight = 0;
+		$http({
+			method: 'GET',
+			url: 'https://ripplefox.com/data/rpcard/' + $scope.account.address
+		}).success(function(data, status){
+			console.log(data);
+			if (data.weight) {
+				$scope.account.weight = data.weight;
+			}
+		}).error(function(data, status){
+			$scope.updateError(data);
+		});
+	}
 	$scope.queryInfo = function() {
 		window.location.href = $scope.url + "#" + $scope.account.address;
 		$scope.working.info = true;
@@ -150,6 +164,7 @@ app.controller('MyController', function($scope, $http) {
 			$scope.queryOffers();
 		}
 		$scope.rippleName();
+		$scope.cardWeight();
 	}
 	$scope.queryHistory = function() {
 		if (!UInt160.is_valid($scope.account.address)) {
@@ -479,7 +494,7 @@ app.controller('MyController', function($scope, $http) {
 			if (data['lines']) {
 				data.lines.forEach(function(line){
 					var balance = round(line.balance, 3);
-					if (balance >= 0) {
+					if (balance > 0 || line.limit > 0) {
 						var key = line.currency + ':' + line.account;
 						$scope.account.lines[key] = {
 							account : line.account,
