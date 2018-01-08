@@ -1,0 +1,73 @@
+
+.settings {
+	padding: 15px;
+	background-color: #fafafa;
+	border: 1px solid #e1e1e1;
+}
+
+.settings select {
+	margin-right: 15px;
+}
+
+.buy {
+	font-weight: bold;
+	color: #008080;
+}
+
+.sell {
+	font-weight: bold;
+	color: #ff0080;
+}
+
+.sent {
+	font-weight: bold;
+	color: #316F31;
+}
+
+.cancel {
+	font-weight: bold;
+	text-decoration: line-through;
+	color: #B6B4B2;
+}
+
+.sent_create {
+	font-weight: bold;
+	color: #316F31;
+}
+
+.received {
+	font-weight: bold;
+	color: #A20036;
+}
+.recv_create {
+	font-weight: bold;
+	color: #A20036;
+}
+
+.convert {
+	font-weight: bold;
+	color: #416F31;
+}
+
+.currency {
+	font-family: "Lucida Console", Monaco, Monospace;
+	color: #FFFFFF;
+	padding: 1px 3px 1px;
+	border-radius: 3px;
+}
+
+.xrp {
+	background-color:#B6B4B2;
+}
+
+.fund {
+	background-color:#4B6BCC;
+}
+
+.fiat {
+	background-color:#6DC35B;
+}
+
+.nonefiat {
+	background-color:#F58585;
+}
