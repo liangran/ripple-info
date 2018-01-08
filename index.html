@@ -1,0 +1,233 @@
+﻿
+<html ng-app="myApp">
+<head>
+	<meta charset="utf-8">
+	<script src="js/ripple-0.7.36-min.js"></script>
+	<script src="https://cdn.bootcss.com/jquery/2.2.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://cdn.bootcss.com/angular.js/1.3.0/angular.min.js"></script>
+	<script type="text/javascript">
+		var timeoption = {
+			'05' : '5 天内',
+			'10' : '10 天内',
+			'30' : '30 天内',
+			'99' : '所有时间',
+		}
+	</script>
+	<script src="js/jsonrewriter.js"></script>
+	<script src="js/wallets.js"></script>
+	<script src="js/info-ripple.js"></script>
+	<script src="js/info.js"></script>
+	
+	<link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="css/tool.css">
+	<style type="text/css">
+		.right {	text-align: right }
+	</style>
+	<title>账号查询</title>
+</head>
+<body style="padding-top: 50px;">
+
+<div class="container body-content" ng-controller="MyController">
+	<div class="row">
+		<div id="content" class="col-md-12" ng-show="data.length || error">
+			<div class="panel settings" ng-show="error" >
+				<label>出错：<span class="label-danger">{{ error }}</span></label>
+			</div>
+			<div class="panel settings" ng-show="data.length">
+				<ul>
+					<li ng-repeat="msg in data track by $index">{{msg}}</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div id="content" class="col-md-12">
+			<div class="panel panel-default settings">
+			<div class = "">
+			<p>
+				网络：
+				<span ng-show="state" class="label label-info">已连接</span>
+		    	<span ng-hide="state" class="label label-danger">断线</span>
+		    	<span ng-show="connecting" class="label label-warning">正在连接</span>
+		    </p>
+			<p>
+				账号：<input type="text" ng-disabled="isSecretSet" ng-model="account.address" placeholder="地址或名称" size="50">
+				<a class='btn btn-primary' ng-click="queryAll()" ng-disabled="working.info || working.lines || working.offers">查询</a>
+			</p>
+				<img ng-show="account.avatar" src="{{account.avatar}}" style="margin-right:20px">
+				<label ng-show="account.domain" style="margin-right:10px">域名: <a href="https://{{account.domain}}" target="_blank">{{account.domain}}</a></label>
+				<label ng-show="account.fee" style="margin-right:10px">转账费用: {{account.fee}} %</label>
+				<label ng-show="account.sequence" style="margin-right:10px">交易数: {{account.sequence}}</label>
+				<label ng-show="account.name">RippleName: ~{{account.name}}</label>
+			</div>
+			</div>
+		</div>
+		
+		<div id="content" class="col-md-12">
+			<div class="panel panel-default">
+		         <div class="panel-heading">
+		             <h3 class="panel-title">资产</h3>
+		         </div>
+					<table class="table">
+		              <tbody>
+		                  <tr style="border-top: none;">
+		                      <td style="border-top: none;"><span class="currency xrp">XRP</span></td>
+		                      <td style="border-top: none;"></td>
+		                      <td style="border-top: none;text-align: right;">{{account.xrp}}</td>
+		                      <td style="border-top: none;"></td>
+		                  </tr>
+		                  <tr ng-repeat="(key, value) in account.lines">
+		                      <td><span class="currency {{cssCurrency(value.currency)}}">{{value.currency}}</span></td>
+		                      <td><a href="{{url + '#' + value.account}}" target="_blank">{{ walletName(value.account) }}</a></td>
+		                      <td style="text-align: right">{{value.balance}}</td>
+		                      <td style="text-align: right"><span class="currency xrp">{{value.limit}}</span></td>
+		                  </tr>
+		              </tbody>
+		          </table>
+		     </div>
+
+			<div class="panel panel-default" ng-show="account.trust.count">
+				<div class="panel-heading">
+					<h3 class="panel-title">信任线 <span> ({{account.trust.count}})</span></h3>
+				</div>
+				<table class="table">
+					<tbody>
+						<tr style="border-top: none;">
+							<td style="text-align: center" style="border-top: none;">货币</td>
+							<td style="text-align: right" style="border-top: none;">发行量</td>
+							<td style="text-align: center" style="border-top: none;">信任数</td>
+							<td style="text-align: center" style="border-top: none;">持有数</td>
+						</tr>
+						<tr ng-repeat="(currency, line) in account.trust.lines">
+							<td style="text-align: center"><span class="currency {{cssCurrency(line.currency)}}">{{line.currency}}</span></td>
+							<td style="text-align: right">{{line.balance}}</td>
+							<td style="text-align: center">{{line.count}}</td>
+							<td style="text-align: center">{{line.hold}}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		
+	</div>
+
+		
+	<div class="row" ng-hide="isEmpty(account.offers)">
+		<div id="content" class="col-md-12">
+			<div class="panel panel-default">
+		         <div class="panel-heading">
+		             <h3 class="panel-title">委托单 ({{objKeyLength(account.offers)}})</h3>
+		         </div>
+					<table class="table table-hover">
+		              <tbody>
+		                  <tr ng-repeat="(key, value) in account.offers" style="border-top: none;">
+		                      <td style="text-align:center"><span class="{{value.type}}">{{value.type == 'buy' ? '买' : '卖'}}</span></td>
+		                      <td style="text-align:right">{{value.type == 'buy' ? value.pays_value : value.gets_value}} <span class="currency {{cssCurrency(value.type == 'buy' ? value.pays_currency : value.gets_currency)}}">{{value.type == 'buy' ? value.pays_currency : value.gets_currency}}</span></td>
+		                      <td style="text-align:left; color: #999;"><small>{{value.type == 'buy' ? walletName(value.pays_issuer) : walletName(value.gets_issuer)}}</small></td>
+		                      <td style="text-align:center"><span class="{{value.type}}">{{value.type == 'buy' ? '花费' : '得到'}}</span></td>
+		                      <td style="text-align:right">{{value.type == 'buy' ? value.gets_value : value.pays_value}}  <span class="currency {{cssCurrency(value.type == 'buy' ? value.gets_currency : value.pays_currency)}}">{{value.type == 'buy' ? value.gets_currency : value.pays_currency}}</span></td>
+		                      <td style="text-align:left; color: #999;"><small>{{value.type == 'buy' ? walletName(value.gets_issuer) : walletName(value.pays_issuer)}}</small></td>
+		                      <td style="text-align:right">@</td>
+		                      <td style="text-align:right">{{value.price}}</td>
+		                      <td style="text-align:center" ng-show="isSecretSet">
+		                      	 <a class='btn btn-primary' role='button' ng-click="cancelOffer(value.seq)" ng-disabled="value.disabled">撤单</a>
+		                      </td>
+		                      <!-- <td style="text-align:center">{{value.checked}}</td> -->
+		                  </tr>
+		              </tbody>
+		          </table>
+		     </div>
+		</div>	
+	</div>
+	
+	<div class="row">
+		<div id="content" class="col-md-12">
+			<div class="panel panel-default">
+		         <div class="panel-heading">
+		         	<a class='btn btn-primary' ng-click="queryHistory()" ng-disabled="history.working">查询历史</a>
+		         	<select required
+						ng-model="txPeriod"
+						ng-options="key as value for (key,value) in timeoption">
+					</select>
+					<label><input type="checkbox" ng-model="includeOffer">包括买卖</label>
+					<label><input type="checkbox" ng-model="includeConvert">包括兑换</label>
+					<label><input type="checkbox" ng-model="showHash">显示Hash</label>
+		            <span ng-show="history.count && history.working">已经处理{{ history.count }}条数据……</span>
+		            <span ng-show="history.count && !history.working">{{ history.count }}条数据处理完毕。</span>
+		            <span ng-show="history.error" class="label-danger">{{ history.error }}</span>
+		            
+					<span ng-show="history.marker && history.working">目前位于总账 {{history.marker ? history.marker.ledger : 'marker'}}</span>
+		         </div>
+		         
+		         <div class="settings" ng-hide="isEmpty(history.data3)">
+			         <table class="table table-hover">
+			              <tbody>
+			              	  <tr style="">
+			                      <td style="border-top: none;text-align: center">货币</td>
+			                      <td style="border-top: none;text-align: center">发送次数</td>
+			                      <td style="border-top: none;text-align: right">发送金额</td>
+			                      <td style="border-top: none;text-align: center">接收次数</td>
+			                      <td style="border-top: none;text-align: right">接收金额</td>
+			                  </tr>
+			                  <tr ng-repeat="(key, value) in history.data3">
+			                      <td style="text-align: center"><span class="currency {{cssCurrency(key)}}">{{ key }}</span></td>
+			                      <td style="text-align: center">{{ value.send_count }}</td>
+			                      <td style="text-align: right">{{value.send_value}}</td>
+			                      <td style="text-align: center">{{ value.recv_count }}</td>
+			                      <td style="text-align: right">{{value.recv_value}}</td>
+			                  </tr>
+			              </tbody>
+			          </table>
+				 </div>
+			
+		         
+				 <table class="table table-hover">
+		              <tbody>
+		                  <tr ng-repeat="value in history.data2">
+		                      <td style="text-align: center">{{dateStr(value.date)}}</td>
+		                      <td style="text-align: center" class="{{value.type}}">
+		                      	<span ng-show="value.type == 'sent' || value.type == 'received'">{{value.type == 'sent' ? '发送' : '接收'}}</span>
+		                      	<span ng-show="value.type == 'convert'">兑换</span>
+		                      	<span ng-show="value.order.type == 'buy' || value.order.type == 'sell'">{{value.type == 'buy' ? '买入' : '卖出'}}</span>
+		                      </td>
+		                      <td style="text-align: right">
+		                      	<span ng-show="value.type == 'sent' || value.type == 'received'">{{value.value}}</span>
+		                      	<span ng-show="value.type == 'convert'">{{value.value}}</span>
+		                      	<span ng-show="value.order.type == 'buy'">{{value.order.pays_value}}</span>
+		                      	<span ng-show="value.order.type == 'sell'">{{value.order.gets_value}}</span>
+		                      </td>
+		                      <td>
+		                      	<span class="currency {{cssCurrency(value.currency)}}" ng-show="value.type == 'sent' || value.type == 'received' || value.type == 'convert'">{{value.currency}}</span>
+		                      	<span class="currency {{cssCurrency(value.order.pays_currency)}}" ng-show="value.order.type == 'buy'">{{value.order.pays_currency}}</span>
+		                      	<span class="currency {{cssCurrency(value.order.gets_currency)}}" ng-show="value.order.type == 'sell'">{{value.order.gets_currency}}</span>
+		                      </td>
+		                      <td style="text-align: center" class="{{value.type}}">
+		                      	<span ng-show="value.type == 'sent' || value.type == 'received'">{{value.type == 'sent' ? '到' : '自'}}</span>
+		                      	<span ng-show="value.order.type == 'buy' || value.order.type == 'sell'">{{value.type == 'buy' ? '花' : '得'}}</span>
+		                      	<span ng-show="value.type == 'convert'">花</span>
+		                      </td>
+		                      <td style="text-align: left" class="{{value.type}}">
+		                      	<span ng-show="value.type == 'sent' || value.type == 'received'"><a href="{{url + '#' + value.counterparty}}" target="_blank">{{ value.counterparty }}</a></span>
+		                      	<span ng-show="value.order.type == 'buy'">{{value.order.gets_value}}</span>
+		                      	<span ng-show="value.order.type == 'sell'">{{value.order.pays_value}}</span>
+		                      	<span class="currency {{cssCurrency(value.order.gets_currency)}}" ng-show="value.order.type == 'buy'">{{value.order.gets_currency}}</span>
+		                      	<span class="currency {{cssCurrency(value.order.pays_currency)}}" ng-show="value.order.type == 'sell'">{{value.order.pays_currency}}</span>
+		                      	<span ng-show="value.order.type == 'buy' || value.order.type == 'sell'"> @ {{value.order.price}}</span>
+		                      	<span ng-show="value.type == 'convert'">{{value.spent.value}}</span>
+		                      	<span class="currency {{cssCurrency(value.amountSent.currency)}}" ng-show="value.type == 'convert'">{{value.spent.currency}}</span>
+		                      </td>
+		                      <td style="text-align: left; color: #999;">{{ walletShortName(value.counterparty) }}</td>
+		                      <td style="text-align: left"><span class="currency XRP" ng-show="value.tag">{{value.tag}}</span></td>
+		                      <td style="text-align: left" ng-show="showHash"><span class="currency XRP">{{value.hash}}</span></td>
+		                  </tr>
+		              </tbody>
+		          </table>
+
+			</div>
+		</div>	
+	</div>
+
+</div>
+
+</body>
+</html>
